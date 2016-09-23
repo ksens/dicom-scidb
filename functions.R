@@ -143,3 +143,56 @@ ThreeDarray2scidb = function(X,
   ans
 }
 
+<<<<<<< HEAD
+=======
+histscidb = function(X, bin_by, breaks, min, max)
+{
+  if (missing(min) | missing(max)) {
+    stats = aggregate(X, FUN="min(val), max(val)")[]
+  }
+  if (missing(min)) min = stats$val_min
+  if (missing(max)) max = stats$val_max
+  
+  if (missing(breaks)) {
+    numSteps = 22
+    breaks = seq(min, max, length.out = numSteps)
+  }
+  
+  ### Formulate the binning string
+  left = sapply(breaks, function(i){sprintf("val > %.0f", i)})
+  left[1] = sprintf("val >= %.0f", breaks[1]) # Manually correcting the left most condition
+  right = sapply(c(breaks[2:length(breaks)], Inf), function(i){sprintf("val <= %.0f", i)})
+  conditions = paste(left, right, sep = " AND ")
+  # Assign bin numbers 
+  bins = 1:length(breaks)
+  # Finally formulate the string
+  str = NULL
+  for (i in 1:(length(breaks)-2)) {
+   str = paste(str, sprintf("iif(%s, %.0f, ", conditions[i], bins[i]))
+  }
+  str = paste(str, sprintf("%.0f", length(breaks)-1), paste(rep(")", length(breaks)-2), collapse=""))
+  
+  # Apply the bins
+  applybins = transform(X, bin=str)
+  if (missing(bin_by))
+  {
+    hist = aggregate(applybins, FUN="count(*)", by="bin")
+    hist2 = hist[, drop=TRUE]
+    hist2 <- hist2[order(hist2$bin),]
+    
+    hist3 = rep(0, length(breaks))
+    for (i in 1:nrow(hist2)) {hist3[hist2$bin[i]] = hist2$count[i]}
+    
+    if (hist3[length(hist3)] == 0) { # if the last count is zero
+      data.frame(breaks=breaks[1:(length(hist3)-1)], counts=hist3[1:(length(hist3)-1)])
+    } else {stop("error")}
+  } else if (length(bin_by) == 1) {
+    hist = aggregate(applybins, FUN="count(*)", by=list(bin_by, "bin"))
+    hist
+  } else if (length(bin_by) == 2){
+    bin_by[[3]] = "bin"
+    hist = aggregate(applybins, FUN="count(*)", by=bin_by)
+    hist
+  }
+}
+>>>>>>> finalized loader, and addd functions
