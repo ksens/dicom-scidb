@@ -143,7 +143,6 @@ ThreeDarray2scidb = function(X,
   ans
 }
 
-=======
 histscidb = function(X, bin_by, breaks, min, max)
 {
   if (missing(min) | missing(max)) {
