@@ -41,5 +41,22 @@ hist2$breaks
 
 barplot(hist2$counts)
 
-# histogram for all images
+# histogram for all image stacks -- one volume at a time
+histA = histscidb(imgDB, bin_by = "patient_id", breaks = hist1$breaks)
+t1 = proc.time(); 
+histA = scidbeval(histA, temp=TRUE)
+print(proc.time()-t1)
 
+# histogram for all image stacks -- one slice at a time
+histB = histscidb(imgDB, bin_by = list("patient_id", "k"), breaks = hist1$breaks)
+t1 = proc.time(); 
+histB = scidbeval(histB, temp=TRUE)
+print(proc.time()-t1)
+hist2b = subset(histB, patient_id == 2 && k == 70)
+hist2b = hist2b[, drop=TRUE]
+hist2b <- hist2b[order(hist2b$bin),]
+
+hist3b = rep(0, length(hist1$breaks))
+for (i in 1:nrow(hist2b)) {hist3b[hist2b$bin[i]] = hist2b$count[i]}
+hist4b = data.frame(breaks=hist1$breaks, counts=hist3b)
+  
