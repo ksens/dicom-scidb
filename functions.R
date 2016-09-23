@@ -143,7 +143,6 @@ ThreeDarray2scidb = function(X,
   ans
 }
 
-<<<<<<< HEAD
 =======
 histscidb = function(X, bin_by, breaks, min, max)
 {
@@ -195,4 +194,3 @@ histscidb = function(X, bin_by, breaks, min, max)
     hist
   }
 }
->>>>>>> finalized loader, and addd functions
