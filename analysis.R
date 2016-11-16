@@ -22,23 +22,34 @@ x = getImgSlice(imgDB, patientNum = 1, sliceNum = 70)
 y = getRoi(x, 50, 350, 50, 350)
 image( t(df_to_2dmat(y[])), col = gray.colors(256))
 
-xx = project(transform(imgDB, v2 = "iif(val>1000, 1, 0)"), "v2")
-xx = scidbeval(xx, temp=TRUE)
+xx = subset(project(transform(imgDB, v2 = "iif(val>1000, 1, 0)"), "v2"), "v2>0")
+t1 = proc.time(); count(xx); proc.time()-t1
 
+xx = project(transform(imgDB, v2 = "iif(val>1000, 1, 0)"), "v2")
 x = getImgSlice(xx, patientNum = 2, sliceNum = 70)
 y = getRoi(x, 50, 350, 50, 350)
 image( t(df_to_2dmat(y[])), col = gray.colors(256))
 
-# histogram for 1 image
+# histogram for 1 image using R
 sl1 = getImgSlice(imgDB, patientNum = 2, sliceNum = 70)
 # sl1 = subset(sl1, "val>=0")
-data = as.vector(df_to_2dmat(sl1[]))
-hist1 = hist(data)
+data = as.vector(sl1[]$val)
+t1 = proc.time(); hist1 = hist(data); proc.time()-t1
 
-hist2 = histscidb(sl1, breaks = hist1$breaks)
-hist2$counts
-hist2$breaks
+t1 = proc.time(); hist2 = histscidb(sl1, breaks = hist1$breaks); proc.time()-t1
+# hist2$counts
+# hist2$breaks
 
+barplot(hist2$counts)
+
+# histogram for 1 volume using R
+v1 = slice(imgDB, 'patient_id', 2)
+data = as.vector(v1[]$val)
+t1 = proc.time(); hist1 = hist(data); proc.time()-t1
+
+t1 = proc.time(); hist2 = histscidb(v1, breaks = hist1$breaks); proc.time()-t1
+# hist2$counts
+# hist2$breaks
 barplot(hist2$counts)
 
 # histogram for all image stacks -- one volume at a time
@@ -60,3 +71,10 @@ hist3b = rep(0, length(hist1$breaks))
 for (i in 1:nrow(hist2b)) {hist3b[hist2b$bin[i]] = hist2b$count[i]}
 hist4b = data.frame(breaks=hist1$breaks, counts=hist3b)
   
+## PCA on the image histogram vectors
+bin_max = aggregate(histB, FUN="max(bin)")[]$bin_max
+patient_id_max = aggregate(histB, FUN="max(bin)")[]$bin_max
+
+histB2 = redimension(histA, "<count:uint64>[patient_id=0:29,10,0, bin=0:290,10,0]")
+histB2 = merge(histB2, build(0, histB2), merge=TRUE, equi_join = FALSE)
+histB2 = scidbeval(histB2, temp=TRUE)
